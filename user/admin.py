@@ -78,13 +78,18 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):
-    list_display = ("name", "price")
+    list_display = (
+        "name",
+        "features" "price",
+        "max_habits",
+        "max_leagues",
+    )
     search_fields = ("name",)
 
 
 @admin.register(Habit)
 class HabitAdmin(admin.ModelAdmin):
-    list_display = ("name", "created_at")
+    list_display = ("name", "description", "created_at")
     search_fields = ("name",)
 
 
