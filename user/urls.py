@@ -16,6 +16,7 @@ urlpatterns = [
     path("<int:pk>/", views.UserDetailView.as_view(), name="user-detail"),
     path("me/", views.CurrentUserView.as_view(), name="current-user"),
     # Habits endpoints
+    path("me/habits/", views.UsersHabitsView.as_view(), name="user-habits"),
     path("habits/", views.HabitListView.as_view(), name="habit-list"),
     path("habits/<int:pk>/", views.HabitDetailView.as_view(), name="habit-detail"),
     # Plans endpoints
