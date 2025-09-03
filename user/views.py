@@ -54,6 +54,26 @@ class HabitDetailView(generics.RetrieveAPIView):
         return get_object_or_404(Habit, pk=self.kwargs.get("pk"))
 
 
+class UsersHabitsView(generics.ListAPIView):
+    """List all habits for the current user, or create/link a new one with plan limits."""
+
+    serializer_class = HabitSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return self.request.user.habits.all()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        plan = user.plan
+
+        if plan and user.plan.name == "Free":
+            if user.habits.count() >= plan.max_habits:
+                raise PermissionError("Habit limit reached for your current plan.")
+        serializer.save()
+        user.habits.add(serializer.instance)
+
+
 # Plans Views
 class PlanListView(generics.ListAPIView):
     """List all plans. Creation of plans is handled via admin interface."""
