@@ -1,5 +1,26 @@
+import secrets
+from django.core.cache import cache
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenRefreshSerializer,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from .models import CustomUser, Habit, Plan
+
+
+class OpaqueTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        raw_refresh = data.pop("refresh")
+
+        refresh = RefreshToken(raw_refresh)
+        opaque = secrets.token_urlsafe(32)
+
+        cache.set(opaque, str(refresh), timeout=refresh.lifetime.total_seconds())
+
+        data["refresh"] = opaque
+        return data
 
 
 class HabitSerializer(serializers.ModelSerializer):
