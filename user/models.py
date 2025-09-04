@@ -27,7 +27,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     twitter_url = models.URLField(blank=True)
     github_url = models.URLField(blank=True)
 
-    habits = models.ManyToManyField("Habit", blank=True)
+    habits = models.ManyToManyField(
+        "Habit",
+        blank=True,
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -47,7 +50,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class Plan(models.Model):
     name = models.CharField(max_length=20, unique=True)
-    price = models.DecimalField(max_digits=6, decimal_places=2)
+    price_monthly = models.DecimalField(max_digits=6, decimal_places=2)
+    price_annually = models.DecimalField(max_digits=6, decimal_places=2)
     features = models.TextField()
 
     max_habits = models.IntegerField(default=0)

@@ -80,7 +80,9 @@ class CustomUserAdmin(UserAdmin):
 class PlanAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "features" "price",
+        "features",
+        "price_monthly",
+        "price_annually",
         "max_habits",
         "max_leagues",
     )
