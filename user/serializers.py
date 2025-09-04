@@ -2,7 +2,6 @@ import secrets
 from django.core.cache import cache
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
-    TokenRefreshSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
