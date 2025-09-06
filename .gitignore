@@ -8,3 +8,4 @@ media/
 .vscode/
 *.db
 *.sqlite3
+*.rest
