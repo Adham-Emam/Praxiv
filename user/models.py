@@ -28,7 +28,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     github_url = models.URLField(blank=True)
 
     habits = models.ManyToManyField(
-        "Habit",
+        "habit.Habit",
         blank=True,
     )
 
@@ -48,6 +48,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class UserScore(models.Model):
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="global_score"
+    )
+    score = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user} → {self.score} pts"
+
+
 class Plan(models.Model):
     name = models.CharField(max_length=20, unique=True)
     price_monthly = models.DecimalField(max_digits=6, decimal_places=2)
@@ -56,15 +66,6 @@ class Plan(models.Model):
 
     max_habits = models.IntegerField(default=0)
     max_leagues = models.IntegerField(default=0)
-
-    def __str__(self):
-        return self.name
-
-
-class Habit(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name

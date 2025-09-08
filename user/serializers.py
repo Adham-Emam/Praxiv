@@ -5,7 +5,8 @@ from rest_framework_simplejwt.serializers import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
-from .models import CustomUser, Habit, Plan
+from .models import CustomUser, UserScore, Plan
+from habit.models import Habit
 
 
 class OpaqueTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -20,12 +21,6 @@ class OpaqueTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         data["refresh"] = opaque
         return data
-
-
-class HabitSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Habit
-        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -90,6 +85,12 @@ class UserSerializer(serializers.ModelSerializer):
 
         user = CustomUser.objects.create_user(**validated_data)
         return user
+
+
+class UserScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserScore
+        fields = ["user", "score"]
 
 
 class PlanSerializer(serializers.ModelSerializer):

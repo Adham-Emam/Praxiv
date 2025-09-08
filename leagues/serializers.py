@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import League
+from .models import League, LeagueParticipant
 from datetime import date
 
 
@@ -32,3 +32,9 @@ class LeaguesSerializer(serializers.ModelSerializer):
         last_name = obj.created_by.last_name or ""
         full_name = f"{first_name} {last_name}".strip()
         return full_name if full_name else obj.created_by.email
+
+
+class LeagueParticipantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeagueParticipant
+        fields = ["user", "score"]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import League
+from .models import League, LeagueParticipant
 
 
 @admin.register(League)
@@ -30,12 +30,6 @@ class LeagueAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Participation",
-            {
-                "fields": ("participants",),
-            },
-        ),
-        (
             "Timeline",
             {
                 "fields": (
@@ -57,3 +51,8 @@ class LeagueAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+class LeagueParticipantInline(admin.TabularInline):
+    model = LeagueParticipant
+    extra = 1  # how many empty forms to show

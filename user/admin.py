@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Plan, Habit
+from .models import CustomUser, Plan
 
 
 class CustomUserAdmin(UserAdmin):
@@ -86,12 +86,6 @@ class PlanAdmin(admin.ModelAdmin):
         "max_habits",
         "max_leagues",
     )
-    search_fields = ("name",)
-
-
-@admin.register(Habit)
-class HabitAdmin(admin.ModelAdmin):
-    list_display = ("name", "description", "created_at")
     search_fields = ("name",)
 
 

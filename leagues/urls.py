@@ -12,4 +12,9 @@ urlpatterns = [
         name="league-edit",
     ),
     path("<int:pk>/enter/", views.LeagueEnterView.as_view(), name="league-enter"),
+    path(
+        "leaderboards/<int:league_id>/",
+        views.LeagueLeaderboardView.as_view(),
+        name="league_leaderboard",
+    ),
 ]

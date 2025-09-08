@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404
-from .models import League
-from .serializers import LeaguesSerializer
+from .models import League, LeagueParticipant
+from .serializers import LeaguesSerializer, LeagueParticipantSerializer
 from core.permissions import IsOwner
 
 
@@ -79,3 +79,14 @@ class LeagueEnterView(generics.RetrieveUpdateAPIView):
         league.participants.add(user)
 
         serializer.save()
+
+
+class LeagueLeaderboardView(generics.ListAPIView):
+    """List users ranked in a specific league."""
+
+    serializer_class = LeagueParticipantSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        league_id = self.kwargs["league_id"]
+        return LeagueParticipant.objects.filter(league_id=league_id).order_by("-score")
