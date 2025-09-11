@@ -69,3 +69,53 @@ class Plan(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class UserProgress(models.Model):
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="progress"
+    )
+    xp = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+
+    BASE_XP = 100  # XP required for level 1
+    MULTIPLIER = 1.5  # Each next level requires 1.5x more XP
+
+    def xp_for_level(self, level: int) -> int:
+        """Total XP required to reach the *start* of a given level."""
+        if level <= 1:
+            return 0
+
+        xp = 0
+        for lvl in range(2, level + 1):
+            xp += int(self.BASE_XP * (self.MULTIPLIER ** (lvl - 2)))
+        return xp
+
+    def calculate_level(self) -> int:
+        """Determine the user's level based on total XP."""
+        lvl = 1
+        while self.xp >= self.xp_for_level(lvl + 1):
+            lvl += 1
+        return lvl
+
+    def current_xp_in_level(self) -> int:
+        """XP earned inside the current level (not total XP)."""
+        return self.xp - self.xp_for_level(self.level)
+
+    def xp_to_next_level(self) -> int:
+        """Remaining XP until the next level."""
+        return self.xp_for_level(self.level + 1) - self.xp
+
+    def add_xp(self, amount: int):
+        """Add XP and auto-update level."""
+        self.xp += amount
+        self.level = self.calculate_level()
+        self.save()
+
+    def save(self, *args, **kwargs):
+        """Ensure level matches XP before saving."""
+        self.level = self.calculate_level()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} → L{self.level} ({self.xp} XP)"

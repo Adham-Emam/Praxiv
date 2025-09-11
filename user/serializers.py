@@ -5,7 +5,7 @@ from rest_framework_simplejwt.serializers import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
-from .models import CustomUser, UserScore, Plan
+from .models import CustomUser, UserScore, Plan, UserProgress
 from habit.models import Habit
 
 
@@ -23,6 +23,32 @@ class OpaqueTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class UserProgressSerializer(serializers.ModelSerializer):
+    current_xp_in_level = serializers.SerializerMethodField()
+    xp_to_next_level = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProgress
+        fields = [
+            "level",
+            "xp",
+            "current_xp_in_level",
+            "xp_to_next_level",
+        ]
+
+    def get_current_xp_in_level(self, obj):
+        return obj.current_xp_in_level()
+
+    def get_xp_to_next_level(self, obj):
+        return obj.xp_to_next_level()
+
+
+class PlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Plan
+        fields = "__all__"
+
+
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(validators=[])
     habits = serializers.PrimaryKeyRelatedField(
@@ -31,12 +57,9 @@ class UserSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty=True,
     )
-    plan = serializers.SlugRelatedField(
-        slug_field="name",
-        queryset=Plan.objects.all(),
-        required=False,
-        allow_null=True,
-    )
+    plan = PlanSerializer(read_only=True)
+
+    progress = UserProgressSerializer(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -62,6 +85,7 @@ class UserSerializer(serializers.ModelSerializer):
             "plan",
             "date_joined",
             "is_staff",
+            "progress",
         ]
         read_only_fields = [
             "id",
@@ -91,9 +115,3 @@ class UserScoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserScore
         fields = ["user", "score"]
-
-
-class PlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Plan
-        fields = "__all__"

@@ -4,24 +4,45 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
-from .models import UserScore, Plan
+from .models import UserScore, Plan, UserProgress
 
 User = get_user_model()
 
 
 class UserViewsTests(APITestCase):
     def setUp(self):
-
         self.client = APIClient()
 
-        # Test plan
-        self.plan = Plan.objects.create(
+        # Ensure base plans exist
+        self.free_plan, _ = Plan.objects.get_or_create(
             name="Free",
-            price_monthly=0,
-            price_annually=0,
-            features="Basic features",
-            max_habits=5,
-            max_leagues=1,
+            defaults={
+                "price_monthly": 0,
+                "price_annually": 0,
+                "features": "Basic access",
+                "max_habits": 3,
+                "max_leagues": 1,
+            },
+        )
+        self.plus_plan, _ = Plan.objects.get_or_create(
+            name="Plus",
+            defaults={
+                "price_monthly": 9.99,
+                "price_annually": 99.99,
+                "features": "More habits and leagues",
+                "max_habits": 10,
+                "max_leagues": 3,
+            },
+        )
+        self.premium_plan, _ = Plan.objects.get_or_create(
+            name="Premium",
+            defaults={
+                "price_monthly": 19.99,
+                "price_annually": 199.99,
+                "features": "Unlimited access",
+                "max_habits": 0,
+                "max_leagues": 0,
+            },
         )
 
         # Users
@@ -30,24 +51,24 @@ class UserViewsTests(APITestCase):
             password="pass1234",
             first_name="Test",
             last_name="User",
-            plan=self.plan,
+            plan=self.plus_plan,  # explicitly test non-default plan
         )
         self.other_user = User.objects.create_user(
             email="other@example.com",
             password="pass1234",
             first_name="Other",
             last_name="User",
-        )
+        )  # should default to Free plan
 
         # Scores
         UserScore.objects.create(user=self.user, score=50)
         UserScore.objects.create(user=self.other_user, score=80)
 
-        # clear cache before running tests
+        # Clear cache before running tests
         cache.clear()
 
     # ---------------- UserCreateView ----------------
-    def test_create_user(self):
+    def test_create_user_defaults(self):
         url = reverse("user-create")
         data = {
             "email": "new@example.com",
@@ -57,7 +78,12 @@ class UserViewsTests(APITestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+
+        new_user = User.objects.get(email="new@example.com")
+        self.assertEqual(new_user.plan.name, "Free")  # default plan
+        self.assertTrue(
+            UserProgress.objects.filter(user=new_user).exists()
+        )  # progress created
 
     # ---------------- UserDetailView ----------------
     def test_retrieve_user_detail(self):
@@ -65,6 +91,7 @@ class UserViewsTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.user.id)
+        self.assertEqual(response.data["plan"]["name"], self.user.plan.name)
 
     # ---------------- CurrentUserView ----------------
     def test_current_user_view_authenticated(self):
@@ -89,14 +116,12 @@ class UserViewsTests(APITestCase):
         self.assertIn("refresh", response.data)
 
     def test_refresh_with_opaque_token(self):
-        # Create refresh
         refresh = RefreshToken.for_user(self.user)
 
-        # Create opaque mapping
         opaque = "opaque123"
         cache.set(opaque, str(refresh), timeout=int(refresh.lifetime.total_seconds()))
 
-        url = reverse("token_refresh")  # your OpaqueRefreshView
+        url = reverse("token_refresh")
         response = self.client.post(url, {"refresh": opaque}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
@@ -114,18 +139,19 @@ class UserViewsTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
-        # Highest score first
-        self.assertEqual(response.data[0]["user"], self.other_user.id)
+        self.assertEqual(
+            response.data[0]["user"], self.other_user.id
+        )  # Highest score first
 
     # ---------------- Plans ----------------
     def test_list_plans(self):
         url = reverse("plan-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
+        self.assertGreaterEqual(len(response.data), 3)  # Free, Plus, Premium
 
     def test_retrieve_plan_detail(self):
-        url = reverse("plan-detail", args=[self.plan.id])
+        url = reverse("plan-detail", args=[self.plus_plan.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], self.plan.id)
+        self.assertEqual(response.data["id"], self.plus_plan.id)

@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     # Local apps
     "core",
-    "user",
+    "user.apps.UserConfig",
     "habit",
     "leagues",
 ]
