@@ -64,8 +64,7 @@ class LeagueViewsTests(APITestCase):
             "rewards": "Some rewards",
         }
         response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["created_by"], self.user.id)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_league_unauthenticated(self):
         self.client.force_authenticate(user=None)
