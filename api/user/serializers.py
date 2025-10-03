@@ -3,7 +3,7 @@ from django.core.cache import cache
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
 )
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework import serializers
 from .models import CustomUser, UserScore, Plan, UserProgress
 from habit.models import Habit
@@ -13,13 +13,21 @@ class OpaqueTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         raw_refresh = data.pop("refresh")
+        raw_access = data.pop("access")
 
         refresh = RefreshToken(raw_refresh)
-        opaque = secrets.token_urlsafe(32)
+        access = AccessToken(raw_access)
 
-        cache.set(opaque, str(refresh), timeout=refresh.lifetime.total_seconds())
+        opaque_refresh = secrets.token_urlsafe(32)
+        opaque_access = secrets.token_urlsafe(32)
 
-        data["refresh"] = opaque
+        cache.set(
+            opaque_refresh, str(refresh), timeout=refresh.lifetime.total_seconds()
+        )
+        cache.set(opaque_access, str(access), timeout=access.lifetime.total_seconds())
+
+        data["refresh"] = opaque_refresh
+        data["access"] = opaque_access
         return data
 
 

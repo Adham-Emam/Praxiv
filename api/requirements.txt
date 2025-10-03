@@ -2,6 +2,7 @@ asgiref==3.9.1
 dj-database-url==3.0.1
 Django==5.2.5
 django-cors-headers==4.7.0
+django-redis==6.0.0
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 gunicorn==23.0.0
@@ -10,6 +11,7 @@ pillow==11.3.0
 psycopg==3.2.9
 PyJWT==2.10.1
 python-dotenv==1.1.1
+redis==6.4.0
 sqlparse==0.5.3
 typing_extensions==4.15.0
 whitenoise==6.9.0

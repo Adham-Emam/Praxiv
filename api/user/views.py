@@ -17,7 +17,7 @@ from .serializers import (
 
 # User Views
 class OpaqueTokenObtainPairView(TokenObtainPairView):
-    """Obtain JWT tokens wim ==th opaque refresh tokens."""
+    """Obtain JWT tokens with opaque refresh tokens."""
 
     serializer_class = OpaqueTokenObtainPairSerializer
 
@@ -26,14 +26,14 @@ class OpaqueRefreshView(TokenRefreshView):
     """Refresh the Opaque token with new one and handle the hashing"""
 
     def post(self, request, *args, **kwargs):
-        opaque = request.data.get("refresh")
-        if not opaque:
+        opaque_refresh = request.data.get("refresh")
+        if not opaque_refresh:
             return Response(
                 {"detail": "No refresh token provided."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        real_refresh = cache.get(opaque)
+        real_refresh = cache.get(opaque_refresh)
         if not real_refresh:
             return Response(
                 {"detail": "Invalid or expired refresh token."},
@@ -49,13 +49,23 @@ class OpaqueRefreshView(TokenRefreshView):
             )
 
         # Rotate: invalidate old opaque and issue a new one
-        cache.delete(opaque)
-        new_opaque = secrets.token_urlsafe(32)
+        cache.delete(opaque_refresh)
+        new_opaque_refresh = secrets.token_urlsafe(32)
         cache.set(
-            new_opaque, str(refresh), timeout=int(refresh.lifetime.total_seconds())
+            new_opaque_refresh,
+            str(refresh),
+            timeout=int(refresh.lifetime.total_seconds()),
         )
 
-        return Response({"access": str(access), "refresh": new_opaque})
+        #  Generate opaque access token
+        new_opaque_access = secrets.token_urlsafe(32)
+        cache.set(
+            new_opaque_access,
+            str(access),
+            timeout=int(access.lifetime.total_seconds()),
+        )
+
+        return Response({"access": new_opaque_access, "refresh": new_opaque_refresh})
 
 
 class UserCreateView(generics.CreateAPIView):
